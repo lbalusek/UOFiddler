@@ -44,6 +44,7 @@ namespace UoFiddler.Controls.UserControls
             TreeViewMobs = new System.Windows.Forms.TreeView();
             contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(components);
             removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            customExportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             FacingBar = new System.Windows.Forms.TrackBar();
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
@@ -134,7 +135,11 @@ namespace UoFiddler.Controls.UserControls
             // 
             // contextMenuStrip2
             // 
-            contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { removeToolStripMenuItem });
+            contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[]
+            {
+                removeToolStripMenuItem, 
+                customExportToolStripMenuItem
+            });
             contextMenuStrip2.Name = "contextMenuStrip2";
             contextMenuStrip2.Size = new System.Drawing.Size(118, 26);
             // 
@@ -144,6 +149,12 @@ namespace UoFiddler.Controls.UserControls
             removeToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
             removeToolStripMenuItem.Text = "Remove";
             removeToolStripMenuItem.Click += OnClickRemove;
+            
+            customExportToolStripMenuItem.Name = "customExportToolStripMenuItem";
+            customExportToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+            customExportToolStripMenuItem.Text = "Custom Export";
+            customExportToolStripMenuItem.Click += OnClickCustomExport;
+            
             // 
             // FacingBar
             // 
@@ -531,6 +542,7 @@ namespace UoFiddler.Controls.UserControls
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.PictureBox MainPictureBox;
         private System.Windows.Forms.ToolStripMenuItem removeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customExportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem rewriteXmlToolStripMenuItem;
         private System.Windows.Forms.ToolStripDropDownButton SettingsButton;
         private System.Windows.Forms.ToolStripMenuItem sortAlphaToolStripMenuItem;

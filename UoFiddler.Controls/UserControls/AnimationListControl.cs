@@ -16,12 +16,15 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using Ultima;
 using UoFiddler.Controls.Classes;
 using UoFiddler.Controls.Forms;
 using UoFiddler.Controls.Helpers;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace UoFiddler.Controls.UserControls
 {
@@ -34,12 +37,153 @@ namespace UoFiddler.Controls.UserControls
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
         }
 
+        public enum Anim {
+            WalkUnarmed,
+            WalkArmed,
+            RunUnarmed,
+            RunArmed,
+            Fly,
+            Stand,
+            Fidget1,
+            Fidget2,
+            StandOneHandedAttack,
+            StandTwoHandedAttack,
+            AttackOneHanded,
+            AttackUnarmed1,
+            AttackUnarmed2,
+            AttackUnarmed3,
+            AttackTwoHandedDown,
+            AttackTwoHandedWide,
+            AttackTwoHandedJab,
+            WalkWarMode,
+            CastDirect,
+            CastArea,
+            AttackBow,
+            AttackCrossbow,
+            AttackThrow,
+            Pillage,
+            Stomp,
+            Alert,
+            GetHit1,
+            GetHit2,
+            GetHit3,
+            Die1,
+            Die2,
+            OnMountRideSlow,
+            OnMountRideFast,
+            OnMountStand,
+            OnMountAttack,
+            OnMountAttackBow,
+            OnMountAttackCrossbow,
+            OnMountSlapHorse,
+            ShieldBlock,
+            AttackUnarmedAndWalk,
+            Bow,
+            Salute,
+            Eat
+        }
+
+        private static readonly Dictionary<string, Anim?> _monsterMap = new()
+        {
+            { "Walk", Anim.WalkUnarmed },
+            { "Idle1", Anim.Stand },
+            { "Die1", Anim.Die1 },
+            { "Die2", Anim.Die2 },
+            { "Attack1", Anim.AttackUnarmed1 },
+            { "Attack2", Anim.AttackUnarmed2 },
+            { "Attack3", Anim.AttackUnarmed3 },
+            { "AttackBow", Anim.AttackBow },
+            { "AttackCrossBow", Anim.AttackCrossbow },
+            { "AttackThrow", Anim.AttackThrow },
+            { "GetHit", Anim.GetHit1 },
+            { "Pillage", Anim.Pillage },
+            { "Stomp", Anim.Stomp },
+            { "Cast2", Anim.CastArea },
+            { "Cast3", Anim.CastDirect },
+            { "BlockRight", Anim.GetHit2 },
+            { "BlockLeft", Anim.GetHit3 },
+            { "Idle2", Anim.Fidget1 },
+            { "Fidget", Anim.Fidget2 },
+            { "Fly", Anim.Fly },
+            { "TakeOff", null },
+            { "GetHitInAir", null }
+        };
+
+        private static readonly Dictionary<string, Anim?> _seaMap = new()
+        {
+            { "Walk", Anim.WalkUnarmed },
+            { "Run", Anim.RunUnarmed },
+            { "Idle1", Anim.Stand },
+            { "Idle2", Anim.Fidget1 },
+            { "Fidget", Anim.Fidget2 },
+            { "Attack1", Anim.AttackUnarmed1 },
+            { "Attack2", Anim.AttackUnarmed2 },
+            { "GetHit", Anim.GetHit1 },
+            { "Die1", Anim.Die1 }
+        };
+
+        private static readonly Dictionary<string, Anim?> _animalMap = new()
+        {
+            { "Walk", Anim.WalkUnarmed },
+            { "Run", Anim.RunUnarmed },
+            { "Idle1", Anim.Stand },
+            { "Eat", Anim.Eat },
+            { "Alert", Anim.Alert },
+            { "Attack1", Anim.AttackUnarmed1 },
+            { "Attack2", Anim.AttackUnarmed2 },
+            { "GetHit", Anim.GetHit1 },
+            { "Die1", Anim.Die1 },
+            { "Idle2", Anim.Fidget1 },
+            { "Fidget", Anim.Fidget2 },
+            { "LieDown", null },
+            { "Die2", Anim.Die2 }
+        };
+
+        private static readonly Dictionary<string, Anim?> _humanMap = new()
+        {
+            { "Walk_01", Anim.WalkUnarmed },
+            { "WalkStaff_01", Anim.WalkArmed },
+            { "Run_01", Anim.RunUnarmed },
+            { "RunStaff_01", Anim.RunArmed },
+            { "Idle_01", Anim.Stand },
+            { "Idle_02", Anim.Fidget1 },
+            { "Fidget_Yawn_Stretch_01", Anim.Fidget2 },
+            { "CombatIdle1H_01", Anim.StandOneHandedAttack },
+            { "CombatIdle1H_02", Anim.StandTwoHandedAttack },
+            { "AttackSlash1H_01", Anim.AttackOneHanded },
+            { "AttackPierce1H_01", Anim.AttackUnarmed1 },
+            { "AttackBash1H_01", Anim.AttackUnarmed2 },
+            { "AttackBash2H_01", Anim.AttackTwoHandedDown },
+            { "AttackSlash2H_01", Anim.AttackTwoHandedWide },
+            { "AttackPierce2H_01", Anim.AttackTwoHandedJab },
+            { "CombatAdvance_1H_01", Anim.WalkWarMode },
+            { "Spell1", Anim.CastDirect },
+            { "Spell2", Anim.CastArea },
+            { "AttackBow_01", Anim.AttackBow },
+            { "AttackCrossbow_01", Anim.AttackCrossbow },
+            { "GetHit_Fr_Hi_01", Anim.GetHit1 },
+            { "Die_Hard_Fwd_01", Anim.Die1 },
+            { "Die_Hard_Back_01", Anim.Die2 },
+            { "Horse_Walk_01", Anim.OnMountRideSlow },
+            { "Horse_Run_01", Anim.OnMountRideFast },
+            { "Horse_Idle_01", Anim.OnMountStand },
+            { "Horse_Attack1H_SlashRight_01", Anim.OnMountAttack },
+            { "Horse_AttackBow_01", Anim.OnMountAttackBow },
+            { "Horse_AttackCrossbow_01", Anim.OnMountAttackCrossbow },
+            { "Horse_Attack2H_SlashRight_01", Anim.OnMountSlapHorse },
+            { "Block_Shield_Hard_01", Anim.ShieldBlock },
+            { "Punch_Punch_Jab_01", Anim.AttackUnarmedAndWalk },
+            { "Bow_Lesser_01", Anim.Bow },
+            { "Salute_Armed1h_01", Anim.Salute },
+            { "Ingest_Eat_01", Anim.Eat }
+        };
+        
         public string[][] GetActionNames { get; } = {
             // Monster
             new[]
             {
                 "Walk",
-                "Idle",
+                "Idle1",
                 "Die1",
                 "Die2",
                 "Attack1",
@@ -55,7 +199,7 @@ namespace UoFiddler.Controls.UserControls
                 "Cast3",
                 "BlockRight",
                 "BlockLeft",
-                "Idle",
+                "Idle2",
                 "Fidget",
                 "Fly",
                 "TakeOff",
@@ -66,8 +210,8 @@ namespace UoFiddler.Controls.UserControls
             {
                 "Walk",
                 "Run",
-                "Idle",
-                "Idle",
+                "Idle1",
+                "Idle2",
                 "Fidget",
                 "Attack1",
                 "Attack2",
@@ -79,14 +223,14 @@ namespace UoFiddler.Controls.UserControls
             {
                 "Walk",
                 "Run",
-                "Idle",
+                "Idle1",
                 "Eat",
                 "Alert",
                 "Attack1",
                 "Attack2",
                 "GetHit",
                 "Die1",
-                "Idle",
+                "Idle2",
                 "Fidget",
                 "LieDown",
                 "Die2"
@@ -99,10 +243,10 @@ namespace UoFiddler.Controls.UserControls
                 "Run_01",
                 "RunStaff_01",
                 "Idle_01",
-                "Idle_01",
+                "Idle_02",
                 "Fidget_Yawn_Stretch_01",
                 "CombatIdle1H_01",
-                "CombatIdle1H_01",
+                "CombatIdle1H_02",
                 "AttackSlash1H_01",
                 "AttackPierce1H_01",
                 "AttackBash1H_01",
@@ -832,6 +976,148 @@ namespace UoFiddler.Controls.UserControls
 
             node.Remove();
             LoadListView();
+        }
+
+        public class Frame
+        {
+            public string name { get; set; }
+            public int idx { get; set; }
+            public int offset_x { get; set; }
+            public int offset_y { get; set; }
+        }
+
+        public class Metadata
+        {
+            public Guid id { get; set; }
+            public Dictionary<string, Dictionary<string, List<Frame>>> directions { get; set; }
+        }
+        
+        private void OnClickCustomExport(object sender, EventArgs e)
+        {
+            string PascalToKebabCase(string str)
+            {
+                var builder = new StringBuilder();
+                builder.Append(char.ToLower(str.First()));
+
+                foreach (var c in str.Skip(1))
+                {
+                    if (char.IsUpper(c))
+                    {
+                        builder.Append('-');
+                        builder.Append(char.ToLower(c));
+                    }
+                    else
+                    {
+                        builder.Append(c);
+                    }
+                }
+
+                return builder.ToString();
+            }
+            
+            int hue = 0;
+            var tag = (int[])TreeViewMobs.SelectedNode.Tag;
+            int body = tag[0];
+            int type = tag[1];
+            var actions = GetActionNames[type];
+
+            var map = type switch
+            {
+                0 => _monsterMap,
+                1 => _seaMap,
+                2 => _animalMap,
+                3 => _humanMap,
+            };
+
+            var exportDir = Path.Combine(Options.OutputPath, $"custom-export-{body}");
+            if (Directory.Exists(exportDir))
+            {
+                Directory.Delete(exportDir, true);
+            }
+            
+            Directory.CreateDirectory(exportDir);
+
+            var directionDict = new Dictionary<string, Dictionary<string, List<Frame>>>();
+            
+            for (int direction = 0; direction < 5; ++direction)
+            {
+                var actionDict = new Dictionary<string, List<Frame>>();
+                
+                var directionName = direction switch
+                {
+                    0 => "se",
+                    1 => "s",
+                    2 => "sw",
+                    3 => "w",
+                    4 => "nw"
+                };
+                
+                for (int action = 0; action < actions.GetLength(0); ++action)
+                {
+                    if ((!map.TryGetValue(actions[action], out Anim? anim) || anim == null))
+                    {
+                        continue;
+                    }
+                        
+                    var actionName = PascalToKebabCase(anim.ToString());
+                                        
+                    if (!Animations.IsActionDefined(body, action, 0))
+                    {
+                        continue;
+                    }
+
+                    var animFrames = Animations.GetAnimation(_currentSelect, action, direction, ref hue, false, false);
+                    if (animFrames == null)
+                    {
+                        continue;
+                    }
+                    
+                    var frames = new List<Frame>();
+                    
+                    for (int frameIdx = 0; frameIdx < animFrames.Length; ++frameIdx)
+                    {
+                        AnimationFrame animFrame = animFrames[frameIdx];
+
+                        var framePngFile = $"{directionName}-{actionName}-{frameIdx}.png";
+                        animFrame.Bitmap.Save(Path.Combine(exportDir, framePngFile));
+
+                        var frame = new Frame
+                        {
+                            name = framePngFile.Replace(".png", string.Empty),
+                            idx = frameIdx,
+                            offset_x = animFrame.Center.X,
+                            offset_y = animFrame.Center.Y
+                        };
+
+                        frames.Add(frame);
+                    }
+
+                    actionDict.Add(actionName.Replace("-", "_"), frames);
+                }
+
+                directionDict.Add(directionName, actionDict);
+            }
+
+            var metadata = new Metadata
+            {
+                id = Guid.NewGuid(),
+                directions = directionDict
+            };
+
+            var metadataYaml = new SerializerBuilder()
+                .WithNamingConvention(UnderscoredNamingConvention.Instance)
+                .Build()
+                .Serialize(metadata);
+            
+            File.WriteAllText(Path.Combine(exportDir, "metadata.yaml"), metadataYaml);
+
+            MessageBox.Show(
+                $"Exported to {exportDir}",
+                "Export",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information,
+                MessageBoxDefaultButton.Button1
+            );
         }
 
         private AnimationEditForm _animEditFormEntry;
