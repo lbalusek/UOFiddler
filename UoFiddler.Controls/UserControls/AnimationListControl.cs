@@ -16,7 +16,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
 using Ultima;
@@ -994,25 +994,15 @@ namespace UoFiddler.Controls.UserControls
         
         private void OnClickCustomExport(object sender, EventArgs e)
         {
-            string PascalToKebabCase(string str)
+            string PascalToKebabCase(string value)
             {
-                var builder = new StringBuilder();
-                builder.Append(char.ToLower(str.First()));
-
-                foreach (var c in str.Skip(1))
-                {
-                    if (char.IsUpper(c))
-                    {
-                        builder.Append('-');
-                        builder.Append(char.ToLower(c));
-                    }
-                    else
-                    {
-                        builder.Append(c);
-                    }
-                }
-
-                return builder.ToString();
+                return Regex.Replace(
+                        value,
+                        "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z0-9])",
+                        "-$1",
+                        RegexOptions.Compiled)
+                    .Trim()
+                    .ToLower();
             }
             
             int hue = 0;
@@ -1067,7 +1057,7 @@ namespace UoFiddler.Controls.UserControls
                     }
 
                     var animFrames = Animations.GetAnimation(_currentSelect, action, direction, ref hue, false, false);
-                    if (animFrames == null)
+                    if (animFrames == null || animFrames.Any(f => f.Bitmap == null))
                     {
                         continue;
                     }
