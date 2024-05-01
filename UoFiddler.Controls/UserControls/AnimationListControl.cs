@@ -16,7 +16,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using Ultima;
@@ -996,13 +996,23 @@ namespace UoFiddler.Controls.UserControls
         {
             string PascalToKebabCase(string value)
             {
-                return Regex.Replace(
-                        value,
-                        "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z0-9])",
-                        "-$1",
-                        RegexOptions.Compiled)
-                    .Trim()
-                    .ToLower();
+                var builder = new StringBuilder();
+                builder.Append(char.ToLower(value.First()));
+
+                foreach (var c in value.Skip(1))
+                {
+                    if (char.IsUpper(c))
+                    {
+                        builder.Append('-');
+                        builder.Append(char.ToLower(c));
+                    }
+                    else
+                    {
+                        builder.Append(c);
+                    }
+                }
+
+                return builder.ToString();
             }
             
             int hue = 0;
